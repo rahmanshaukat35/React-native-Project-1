@@ -1,4 +1,5 @@
 import React, {createContext, useContext, useEffect, useReducer} from 'react';
+import auth from '@react-native-firebase/auth';
 
 const AuthContext = createContext();
 const initialState = {
@@ -23,7 +24,20 @@ const reducer = (state, action) => {
 };
 export default function AuthContextProvider({children}) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  useEffect(() => {});
+  useEffect(() => {
+    const unsubscribe = auth().onAuthStateChanged(user => {
+      if (user) {
+        dispatch({
+          type: 'LOGIN',
+          payload: {user},
+        });
+      } else {
+        dispatch({type: 'LOGOUT'});
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   return (
     <AuthContext.Provider value={{...state, dispatch}}>

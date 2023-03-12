@@ -1,8 +1,9 @@
+import {Link} from '@react-navigation/native';
 import React, {useState, useEffect} from 'react';
 import {View, StyleSheet, ImageBackground, Text, Alert} from 'react-native';
 import {TextInput, Button} from 'react-native-paper';
 import bg from '../../assets/images/bg.jpg';
-
+import auth from '@react-native-firebase/auth';
 const initialState = {
   email: '',
   password: '',
@@ -10,6 +11,8 @@ const initialState = {
 
 export default function Login({navigation}) {
   const [state, setState] = useState(initialState);
+  const [isProcessing, setIsProcessing] = useState(false);
+
   const handleChange = (name, value) => {
     setState(s => ({...s, [name]: value}));
   };
@@ -21,7 +24,21 @@ export default function Login({navigation}) {
     if (password.length < 6) {
       return alert('Please enter Password correctly');
     }
-    console.log(state);
+    setIsProcessing(true);
+    auth()
+      .signInWithEmailAndPassword(email, password)
+      .then(() => {
+        console.log('User account signed in!');
+        navigation.replace('Frontend');
+      })
+      .catch(error => {
+        if (error.code === 'auth/invalid-email') {
+          console.log('That email address is invalid!');
+        }
+
+        console.error(error);
+      })
+      .finally(() => setIsProcessing(false));
   };
   return (
     <ImageBackground source={bg} style={styles.main}>
@@ -58,9 +75,14 @@ export default function Login({navigation}) {
       <Button
         mode="contained"
         style={{borderRadius: 4, width: '100%'}}
-        onPress={handleLogin}>
+        onPress={handleLogin}
+        loading={isProcessing}
+        disabled={isProcessing}>
         Login
       </Button>
+      <Text>
+        Create New Account? <Link to="/Register">Register</Link>
+      </Text>
     </ImageBackground>
   );
 }
